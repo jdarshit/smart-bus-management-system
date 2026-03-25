@@ -111,6 +111,36 @@ python -m compileall app.py routes models services
 python -c "from app import create_app; app=create_app(); print('ok', len(app.url_map._rules))"
 ```
 
+## Suggested Screenshot Order
+
+Use this order when preparing project report screenshots:
+
+1. Login page
+2. Admin dashboard
+3. Student dashboard
+4. Driver dashboard
+5. Bus management
+6. Mileage logs workflow
+7. Live bus map
+8. IoT or API status output
+
+Suggested naming:
+
+- 01-login.png
+- 02-admin-dashboard.png
+- 03-student-dashboard.png
+- 04-driver-dashboard.png
+- 05-bus-management.png
+- 06-mileage.png
+- 07-live-map.png
+- 08-iot-status.png
+
+## Demo Presentation Flow
+
+For a ready 2-3 minute demo script and step-by-step presentation sequence, use [DEMO_PRESENTATION_FLOW.md](DEMO_PRESENTATION_FLOW.md).
+
+For full final-day submission checklist, use [PROJECT_SUBMISSION_KIT.md](PROJECT_SUBMISSION_KIT.md).
+
 ## Notes
 
 - This repository contains legacy and newer model variants in parallel. The app is currently wired to a stable compatible set and starts successfully.
