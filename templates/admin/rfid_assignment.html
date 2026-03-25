@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}RFID Assignment – Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+  .rfid-badge { font-family: monospace; font-size: .85rem; }
+  .table thead th { background: #1a73e8; color: #fff; }
+  .scan-input { font-family: monospace; letter-spacing: .08em; }
+  #scanFeedback { min-height: 28px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h4 class="fw-bold mb-0"><i class="bi bi-credit-card-2-front text-primary me-2"></i>RFID Card Assignment</h4>
+    <small class="text-muted">Assign or update RFID cards for students</small>
+  </div>
+  <a href="{{ url_for('admin_rfid.rfid_logs_page') }}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-list-ul me-1"></i>View Scan Logs
+  </a>
+</div>
+
+<!-- Quick-assign card (top) -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white fw-semibold">
+    <i class="bi bi-lightning-fill text-warning me-1"></i>Quick Assign
+  </div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">
+      Select a student, then either type the UID manually or tap the RFID card on the ESP32
+      reader while the input is focused (the reader will fill the field automatically via serial bridge).
+    </p>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Student</label>
+        <select id="quickStudentId" class="form-select">
+          <option value="">— choose student —</option>
+          {% for s in students %}
+          <option value="{{ s.id }}" data-current="{{ s.rfid_uid or '' }}">
+            {{ s.student_name }} ({{ s.department }}, Yr {{ s.year or '?' }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">RFID UID</label>
+        <input id="quickUid" type="text" class="form-control scan-input"
+               placeholder="e.g. 72 3C 14 5C" autocomplete="off">
+        <div class="form-text">Tap card or type UID (hex bytes, space-separated)</div>
+      </div>
+      <div class="col-md-4 d-flex align-items-end gap-2">
+        <button id="btnAssign" class="btn btn-primary" onclick="doAssign()">
+          <i class="bi bi-save me-1"></i>Save
+        </button>
+        <button class="btn btn-outline-danger" onclick="doRemove()">
+          <i class="bi bi-x-circle me-1"></i>Remove Card
+        </button>
+      </div>
+    </div>
+    <div id="scanFeedback" class="mt-2"></div>
+  </div>
+</div>
+
+<!-- Students table -->
+<div class="card shadow-sm">
+  <div class="card-header bg-white fw-semibold d-flex align-items-center justify-content-between">
+    <span><i class="bi bi-people me-1 text-primary"></i>All Students</span>
+    <input id="tableSearch" type="text" class="form-control form-control-sm w-auto"
+           placeholder="Search…" oninput="filterTable(this.value)">
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" id="studentTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student Name</th>
+            <th>Department</th>
+            <th>Year</th>
+            <th>Bus</th>
+            <th>Current RFID UID</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+          <tr id="row-{{ s.id }}">
+            <td class="text-muted small">{{ loop.index }}</td>
+            <td class="fw-semibold">{{ s.student_name }}</td>
+            <td>{{ s.department }}</td>
+            <td>{{ s.year or '—' }}</td>
+            <td>{{ s.bus.bus_number if s.bus else '—' }}</td>
+            <td>
+              <span id="uid-{{ s.id }}" class="rfid-badge {% if s.rfid_uid %}badge bg-success-subtle text-success border border-success-subtle{% else %}text-muted{% endif %}">
+                {{ s.rfid_uid or 'Not assigned' }}
+              </span>
+            </td>
+            <td class="text-center">
+              <button
+                      class="btn btn-sm btn-outline-primary me-1 js-prefill"
+                      data-student-id="{{ s.id }}"
+                      data-student-name="{{ s.student_name }}"
+                      data-rfid-uid="{{ s.rfid_uid or '' }}">
+                <i class="bi bi-pencil"></i> Assign
+              </button>
+              {% if s.rfid_uid %}
+              <button
+                      class="btn btn-sm btn-outline-danger js-quick-remove"
+                      data-student-id="{{ s.id }}"
+                      data-student-name="{{ s.student_name }}">
+                <i class="bi bi-x"></i>
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No students found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* -------------------------------------------------- helpers ---- */
+function setFeedback(msg, type) {
+  const el = document.getElementById('scanFeedback');
+  el.innerHTML = `<div class="alert alert-${type} py-1 px-3 mb-0 small">${msg}</div>`;
+  setTimeout(() => { el.innerHTML = ''; }, 5000);
+}
+
+function prefill(id, name, uid) {
+  document.getElementById('quickStudentId').value = id;
+  document.getElementById('quickUid').value = uid;
+  document.getElementById('quickUid').focus();
+  setFeedback(`Editing <strong>${name}</strong> – enter new UID or tap card`, 'info');
+}
+
+function filterTable(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('#studentTable tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+/* -------------------------------------------------- assign ----- */
+async function doAssign() {
+  const studentId = document.getElementById('quickStudentId').value;
+  const uid       = document.getElementById('quickUid').value.trim();
+  if (!studentId) { setFeedback('Please select a student.', 'warning'); return; }
+  if (!uid)       { setFeedback('Please enter an RFID UID.', 'warning'); return; }
+
+  const btn = document.getElementById('btnAssign');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving…';
+
+  try {
+    const resp = await fetch('/admin/assign_rfid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_id: parseInt(studentId), rfid_uid: uid }),
+    });
+    const data = await resp.json();
+
+    if (resp.ok) {
+      setFeedback(`<i class="bi bi-check-circle-fill text-success"></i> ${data.message}`, 'success');
+      // Update the table row live
+      const span = document.getElementById(`uid-${studentId}`);
+      if (span) {
+        span.textContent = data.rfid_uid;
+        span.className = 'rfid-badge badge bg-success-subtle text-success border border-success-subtle';
+      }
+      document.getElementById('quickUid').value = '';
+    } else {
+      setFeedback(`<i class="bi bi-exclamation-triangle-fill"></i> ${data.message}`, 'danger');
+    }
+  } catch (e) {
+    setFeedback('Network error. Please try again.', 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-save me-1"></i>Save';
+  }
+}
+
+/* -------------------------------------------------- remove ----- */
+async function doRemove() {
+  const studentId = document.getElementById('quickStudentId').value;
+  if (!studentId) { setFeedback('Please select a student first.', 'warning'); return; }
+  if (!confirm('Remove RFID card from this student?')) return;
+  await removeById(studentId);
+}
+
+async function quickRemove(id, name) {
+  if (!confirm(`Remove RFID card from ${name}?`)) return;
+  await removeById(id);
+}
+
+async function removeById(studentId) {
+  try {
+    const resp = await fetch('/admin/remove_rfid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_id: parseInt(studentId) }),
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      setFeedback(`<i class="bi bi-check-circle-fill text-success"></i> ${data.message}`, 'success');
+      const span = document.getElementById(`uid-${studentId}`);
+      if (span) {
+        span.textContent = 'Not assigned';
+        span.className = 'rfid-badge text-muted';
+      }
+      document.getElementById('quickUid').value = '';
+    } else {
+      setFeedback(data.message, 'danger');
+    }
+  } catch (e) {
+    setFeedback('Network error.', 'danger');
+  }
+}
+
+document.addEventListener('click', (event) => {
+  const prefillButton = event.target.closest('.js-prefill');
+  if (prefillButton) {
+    prefill(
+      prefillButton.dataset.studentId,
+      prefillButton.dataset.studentName,
+      prefillButton.dataset.rfidUid || ''
+    );
+    return;
+  }
+
+  const removeButton = event.target.closest('.js-quick-remove');
+  if (removeButton) {
+    quickRemove(removeButton.dataset.studentId, removeButton.dataset.studentName);
+  }
+});
+</script>
+{% endblock %}

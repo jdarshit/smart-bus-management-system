@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Settings - Smart Bus{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold mb-0"><i class="bi bi-gear text-secondary"></i> Settings</h1>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="bi bi-person-circle"></i> My Account</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Name</dt>
+                    <dd class="col-sm-8">{{ session.get('user_name') }}</dd>
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">{{ session.get('user_email') }}</dd>
+                    <dt class="col-sm-4">Role</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-primary">{{ session.get('user_role') | capitalize }}</span>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> System Info</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Backend</dt>
+                    <dd class="col-sm-7">Python Flask 3.x</dd>
+                    <dt class="col-sm-5">Database</dt>
+                    <dd class="col-sm-7">MySQL via SQLAlchemy</dd>
+                    <dt class="col-sm-5">IoT Hardware</dt>
+                    <dd class="col-sm-7">ESP32 + MFRC522 RFID</dd>
+                    <dt class="col-sm-5">API Base</dt>
+                    <dd class="col-sm-7"><code>/api/</code></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

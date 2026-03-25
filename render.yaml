@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: smart-bus-management-system
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SESSION_COOKIE_SECURE
+        value: "True"
+      - key: SESSION_COOKIE_SAMESITE
+        value: Lax
+      - key: MAX_CONTENT_LENGTH
+        value: "5242880"
+      - key: UPLOAD_FOLDER
+        value: uploads/mileage
+      - key: ALLOWED_EXTENSIONS
+        value: png,jpg,jpeg,gif,pdf
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: BUS_ARRIVAL_CUTOFF_HOUR
+        value: "9"
+      - key: BUS_ARRIVAL_CUTOFF_MINUTE
+        value: "10"
+      - key: BUS_ARRIVAL_DEBOUNCE_SECONDS
+        value: "15"
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: MAIL_SERVER
+        sync: false
+      - key: MAIL_PORT
+        sync: false
+      - key: MAIL_USE_TLS
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_DEFAULT_SENDER
+        sync: false

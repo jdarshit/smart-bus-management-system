@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Students{% endblock %}
+{% block content %}
+<div class="card shadow-sm border-0 mb-3">
+  <div class="card-body">
+    <h5 class="mb-3">Students</h5>
+    {% if session.get('user_role') == 'admin' %}
+    <form method="post" action="{{ url_for('student.add_student') }}" class="row g-2">
+      <div class="col-md-2"><input class="form-control" name="name" placeholder="Name" required></div>
+      <div class="col-md-2"><input class="form-control" name="department" placeholder="Department" required></div>
+      <div class="col-md-1"><input class="form-control" type="number" name="year" min="1" max="8" placeholder="Year" required></div>
+      <div class="col-md-2"><select class="form-select" name="bus_number" required>{% for b in buses %}<option value="{{ b.bus_number }}">{{ b.bus_number }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><select class="form-select" name="pickup_stop" required>{% for stop in stop_options %}<option value="{{ stop }}">{{ stop }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><button class="btn btn-primary w-100">Add Student</button></div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+<div class="card shadow-sm border-0"><div class="table-responsive"><table class="table table-sm mb-0"><thead class="table-light"><tr><th>Name</th><th>Department</th><th>Year</th><th>Bus</th><th>Pickup Stop</th>{% if session.get('user_role') == 'admin' %}<th>Linked User</th><th>Actions</th>{% endif %}</tr></thead><tbody>
+{% for s in students %}
+<tr>
+  <td>{{ s.name }}</td><td>{{ s.department }}</td><td>{{ s.year }}</td><td>{{ s.bus_number }}</td><td>{{ s.pickup_stop }}</td>
+  {% if session.get('user_role') == 'admin' %}
+  <td>
+    <form method="post" action="{{ url_for('student.link_user', student_id=s.id) }}" class="d-flex gap-2">
+      <select class="form-select form-select-sm" name="user_id">
+        <option value="">Unlinked</option>
+        {% for u in student_users %}
+        <option value="{{ u.id }}" {% if s.user_id == u.id %}selected{% endif %}>{{ u.name }} ({{ u.email }})</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-sm btn-outline-primary">Save</button>
+    </form>
+  </td>
+  <td>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#edit-student-{{ s.id }}">Edit</button>
+      <form method="post" action="{{ url_for('student.delete_student', student_id=s.id) }}" onsubmit="return confirm('Delete student?');">
+        <button class="btn btn-sm btn-outline-danger">Delete</button>
+      </form>
+    </div>
+  </td>
+  {% endif %}
+</tr>
+{% if session.get('user_role') == 'admin' %}
+<tr class="collapse" id="edit-student-{{ s.id }}">
+  <td colspan="7">
+    <form method="post" action="{{ url_for('student.edit_student', student_id=s.id) }}" class="row g-2 p-2 bg-light">
+      <div class="col-md-2"><input class="form-control form-control-sm" name="name" value="{{ s.name }}" required></div>
+      <div class="col-md-2"><input class="form-control form-control-sm" name="department" value="{{ s.department }}" required></div>
+      <div class="col-md-1"><input class="form-control form-control-sm" type="number" name="year" value="{{ s.year }}" min="1" max="8" required></div>
+      <div class="col-md-2"><select class="form-select form-select-sm" name="bus_number">{% for b in buses %}<option value="{{ b.bus_number }}" {% if s.bus_number == b.bus_number %}selected{% endif %}>{{ b.bus_number }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><select class="form-select form-select-sm" name="pickup_stop">{% for stop in stop_options %}<option value="{{ stop }}" {% if s.pickup_stop == stop %}selected{% endif %}>{{ stop }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><button class="btn btn-sm btn-success w-100">Update</button></div>
+    </form>
+  </td>
+</tr>
+{% endif %}
+{% else %}<tr><td colspan="6" class="text-center text-muted">No students found.</td></tr>{% endfor %}
+</tbody></table></div></div>
+{% endblock %}

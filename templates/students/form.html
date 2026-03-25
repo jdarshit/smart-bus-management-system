@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if action == 'edit' else 'Add' }} Student - Smart Bus{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold mb-0">
+        <i class="bi bi-person-plus text-primary"></i>
+        {{ 'Edit Student' if action == 'edit' else 'Add New Student' }}
+    </h1>
+    <a href="/students" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="POST"
+                      action="{{ '/students/' + student.id|string + '/edit' if action == 'edit' else '/students/add' }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" name="student_name" class="form-control"
+                               value="{{ student.student_name if student else '' }}"
+                               placeholder="e.g. Priya Sharma" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Department <span class="text-danger">*</span></label>
+                        <input type="text" name="department" class="form-control"
+                               value="{{ student.department if student else '' }}"
+                               placeholder="e.g. Computer Science" required>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Year</label>
+                            <select name="year" class="form-select">
+                                <option value="">-- Select Year --</option>
+                                {% for y in range(1, 5) %}
+                                <option value="{{ y }}" {{ 'selected' if student and student.year == y }}>
+                                    Year {{ y }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Assign Bus</label>
+                            <select name="bus_id" class="form-select">
+                                <option value="">-- No Bus Assigned --</option>
+                                {% for bus in buses %}
+                                <option value="{{ bus.id }}"
+                                    {{ 'selected' if student and student.bus_id == bus.id }}>
+                                    {{ bus.bus_number }}
+                                    {% if bus.route_name %} — {{ bus.route_name }}{% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-medium">Pickup Point</label>
+                        <input type="text" name="pickup_point" class="form-control"
+                               value="{{ student.pickup_point if student else '' }}"
+                               placeholder="e.g. Main Gate, Stop A">
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i>
+                            {{ 'Update Student' if action == 'edit' else 'Add Student' }}
+                        </button>
+                        <a href="/students" class="btn btn-light">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

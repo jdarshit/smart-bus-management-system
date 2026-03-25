@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Bus Control Room</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_tv.css') }}">
+</head>
+<body>
+    <div class="tv-shell">
+        <header class="tv-header">
+            <div>
+                <h1>SMART BUS ARRIVAL CONTROL ROOM</h1>
+                <p class="subtitle">College Gate Monitoring</p>
+            </div>
+            <div class="header-right">
+                <div class="active-shift" id="activeShift">ACTIVE SHIFT: --</div>
+                <div class="clock" id="clock">--:--:--</div>
+            </div>
+        </header>
+
+        <main>
+            <div class="bus-grid" id="busGrid">
+                <div class="bus-card waiting">
+                    <div class="bus-title">BUS_01</div>
+                    <div class="meta">Loading...</div>
+                </div>
+                <div class="bus-card waiting">
+                    <div class="bus-title">BUS_02</div>
+                    <div class="meta">Loading...</div>
+                </div>
+                <div class="bus-card waiting">
+                    <div class="bus-title">BUS_03</div>
+                    <div class="meta">Loading...</div>
+                </div>
+                <div class="bus-card waiting">
+                    <div class="bus-title">BUS_04</div>
+                    <div class="meta">Loading...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard_tv.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+
+# Flask uploads/runtime
+uploads/
+instance/
+*.sqlite3
+*.db
+smartbus.db
+
+# Logs
+*.log
+server_out.txt
+server_err.txt
+
+# Flask-Migrate cache
+migrations/__pycache__/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

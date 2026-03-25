@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}RFID Logs{% endblock %}
+{% block content %}
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-white"><h5 class="mb-0">RFID Arrival Logs</h5></div>
+  <div class="table-responsive"><table class="table table-sm mb-0"><thead class="table-light"><tr><th>Bus</th><th>RFID UID</th><th>Arrival Time</th><th>Status</th><th>Shift</th></tr></thead><tbody>
+  {% for row in logs %}
+    <tr><td>{{ row.bus_number }}</td><td>{{ row.rfid_uid }}</td><td>{{ row.arrival_time.strftime('%Y-%m-%d %H:%M:%S') }}</td><td>{{ row.status }}</td><td>{{ row.shift|upper }}</td></tr>
+  {% else %}<tr><td colspan="5" class="text-center text-muted">No logs found.</td></tr>{% endfor %}
+  </tbody></table></div>
+</div>
+{% endblock %}

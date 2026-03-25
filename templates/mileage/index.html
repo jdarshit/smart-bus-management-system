@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Mileage Logs - Smart Bus{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-0"><i class="bi bi-speedometer text-danger"></i> Mileage Logs</h1>
+        {% if role in ('admin','management') and pending_count is defined %}
+        <p class="text-muted mb-0">
+            {{ pending_count }} pending approval
+            {% if pending_count > 0 %}
+            <span class="badge bg-danger">{{ pending_count }}</span>
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+{% if role == 'driver' %}
+<!-- ── DRIVER UPLOAD FORM ─────────────────────────────────────────────────── -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> Upload Odometer Image</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="/mileage/upload" enctype="multipart/form-data" class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label fw-medium">Odometer / Dashboard Image</label>
+                <input type="file" name="odometer_image" class="form-control" accept="image/*,.pdf" required>
+                <div class="form-text">Accepted: PNG, JPG, GIF, PDF</div>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-danger w-100">
+                    <i class="bi bi-upload"></i> Submit Log
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- ── LOGS TABLE ─────────────────────────────────────────────────────────── -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white border-bottom">
+        <h5 class="mb-0">
+            {% if role == 'driver' %}My Mileage Logs{% else %}All Mileage Logs{% endif %}
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        {% if role != 'driver' %}<th>Driver</th>{% endif %}
+                        <th>Date</th>
+                        <th>Image</th>
+                        <th>Status</th>
+                        {% if role in ('admin','management') %}<th class="text-end">Actions</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="text-muted">{{ loop.index }}</td>
+                        {% if role != 'driver' %}
+                        <td>{{ log.driver.driver_name if log.driver else '—' }}</td>
+                        {% endif %}
+                        <td>{{ log.date.strftime('%d %b %Y') if log.date else '—' }}</td>
+                        <td>
+                            <a href="{{ url_for('mileage.view_uploaded_file', filepath=log.image_path[8:]) if log.image_path and log.image_path.startswith('uploads/') else url_for('static', filename=log.image_path) }}"
+                               target="_blank" class="btn btn-sm btn-outline-secondary py-0 px-2">
+                                <i class="bi bi-image"></i> View
+                            </a>
+                        </td>
+                        <td>
+                            {% if log.approved %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Approved</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> Pending</span>
+                            {% endif %}
+                        </td>
+                        {% if role in ('admin','management') %}
+                        <td class="text-end">
+                            <form method="POST" action="/mileage/{{ log.id }}/approve" class="d-inline">
+                                <button type="submit" class="btn btn-sm {{ 'btn-outline-secondary' if log.approved else 'btn-outline-success' }}">
+                                    {% if log.approved %}
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    {% else %}
+                                        <i class="bi bi-check-circle"></i> Approve
+                                    {% endif %}
+                                </button>
+                            </form>
+                            {% if session.get('user_role') == 'admin' %}
+                            <form method="POST" action="/mileage/{{ log.id }}/delete" class="d-inline ms-1"
+                                  onsubmit="return confirm('Delete this log?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-speedometer fs-3 d-block mb-2"></i>
+                            No mileage logs found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

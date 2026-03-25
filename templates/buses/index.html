@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Buses{% endblock %}
+{% block content %}
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-white"><h5 class="mb-0">Bus List</h5></div>
+  <div class="table-responsive"><table class="table table-sm mb-0"><thead class="table-light"><tr><th>Bus Number</th><th>License Plate</th><th>Driver Name</th><th>Route</th><th>RFID UID</th></tr></thead><tbody>
+  {% for bus in buses %}
+    <tr><td>{{ bus.bus_number }}</td><td>{{ bus.license_plate or '—' }}</td><td>{{ bus.driver_name or '—' }}</td><td>{{ bus.route_name or '—' }}</td><td>{{ bus.rfid_uid or '—' }}</td></tr>
+  {% else %}<tr><td colspan="5" class="text-center text-muted">No buses found.</td></tr>{% endfor %}
+  </tbody></table></div>
+</div>
+{% endblock %}

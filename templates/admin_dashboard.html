@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="dashboard-shell">
+  <section class="hero-header">
+    <div class="hero-title">Smart Bus Admin Dashboard</div>
+    <p class="hero-subtitle">A unified operational view combining bus arrivals, attendance monitoring, and transport administration.</p>
+  </section>
+
+  <section class="stats-grid">
+    <div class="modern-stat-card blue">
+      <div class="card-body">
+        <div class="stat-icon-wrap"><i class="bi bi-bus-front"></i></div>
+        <div class="stat-title">Total Buses</div>
+        <div class="stat-number">{{ total_buses }}</div>
+      </div>
+    </div>
+    <div class="modern-stat-card yellow">
+      <div class="card-body">
+        <div class="stat-icon-wrap"><i class="bi bi-people"></i></div>
+        <div class="stat-title">Total Students</div>
+        <div class="stat-number">{{ total_students }}</div>
+      </div>
+    </div>
+    <div class="modern-stat-card green">
+      <div class="card-body">
+        <div class="stat-icon-wrap"><i class="bi bi-clipboard-check"></i></div>
+        <div class="stat-title">Today Attendance</div>
+        <div class="stat-number">{{ today_attendance }}</div>
+      </div>
+    </div>
+    <div class="modern-stat-card red">
+      <div class="card-body">
+        <div class="stat-icon-wrap"><i class="bi bi-exclamation-triangle"></i></div>
+        <div class="stat-title">Late Buses</div>
+        <div class="stat-number">{{ late_buses }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dashboard-panel">
+    <div class="panel-header">
+      <h5 class="panel-title">Quick Actions</h5>
+    </div>
+    <div class="panel-body">
+      <div class="quick-actions">
+        <a class="btn btn-primary quick-action-btn" href="/students"><i class="bi bi-people"></i> Manage Students</a>
+        <a class="btn btn-warning quick-action-btn text-dark" href="/drivers"><i class="bi bi-person-badge"></i> Manage Drivers</a>
+        <a class="btn btn-success quick-action-btn" href="/attendance"><i class="bi bi-clipboard-check"></i> View Attendance</a>
+        <a class="btn btn-outline-primary quick-action-btn" href="/reports"><i class="bi bi-bar-chart"></i> View Reports</a>
+        <a class="btn btn-outline-danger quick-action-btn" href="/admin/bus-arrivals"><i class="bi bi-broadcast-pin"></i> Live Bus Arrivals</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="row g-4">
+    <div class="col-xl-4">
+      <div class="dashboard-panel h-100">
+        <div class="panel-header"><h5 class="panel-title">Recent Students</h5></div>
+        <div class="panel-body"><div class="panel-list" id="recentStudentsList"><div class="text-muted">Loading recent students...</div></div></div>
+      </div>
+    </div>
+    <div class="col-xl-4">
+      <div class="dashboard-panel h-100">
+        <div class="panel-header"><h5 class="panel-title">Recent Bus Arrivals</h5></div>
+        <div class="panel-body"><div class="panel-list" id="recentArrivalsList"><div class="text-muted">Loading recent bus arrivals...</div></div></div>
+      </div>
+    </div>
+    <div class="col-xl-4">
+      <div class="dashboard-panel h-100">
+        <div class="panel-header"><h5 class="panel-title">Drivers Overview</h5></div>
+        <div class="panel-body"><div class="panel-list" id="driverOverviewList"><div class="text-muted">Loading driver overview...</div></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>{% endblock %}

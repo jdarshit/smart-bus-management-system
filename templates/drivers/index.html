@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Drivers{% endblock %}
+{% block content %}
+<div class="card shadow-sm border-0 mb-3">
+  <div class="card-body">
+    <h5 class="mb-3">Drivers</h5>
+    {% if session.get('user_role') == 'admin' %}
+    <form method="post" action="{{ url_for('driver.add_driver') }}" enctype="multipart/form-data" class="row g-2">
+      <div class="col-md-2"><input class="form-control" name="driver_name" placeholder="Driver Name" required></div>
+      <div class="col-md-2"><input class="form-control" name="phone" placeholder="Phone"></div>
+      <div class="col-md-2"><input class="form-control" name="license_number" placeholder="License Number" required></div>
+      <div class="col-md-2"><input class="form-control" name="bus_number" placeholder="Bus Number" required></div>
+      <div class="col-md-2"><input class="form-control" type="file" name="photo" accept="image/*"></div>
+      <div class="col-md-2"><button class="btn btn-primary w-100">Add Driver</button></div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+<div class="card shadow-sm border-0"><div class="table-responsive"><table class="table table-sm mb-0"><thead class="table-light"><tr><th>Photo</th><th>Name</th><th>Phone</th><th>License</th><th>Bus</th>{% if session.get('user_role') == 'admin' %}<th>Linked User</th><th>Actions</th>{% endif %}</tr></thead><tbody>
+{% for d in drivers %}
+<tr>
+  <td>{% if d.photo %}<img src="{{ url_for('static', filename=d.photo) }}" style="height:48px;width:48px;object-fit:cover;border-radius:8px;">{% else %}—{% endif %}</td>
+  <td>{{ d.driver_name }}</td><td>{{ d.phone or '—' }}</td><td>{{ d.license_number }}</td><td>{{ d.bus_number }}</td>
+  {% if session.get('user_role') == 'admin' %}
+  <td>
+    <form method="post" action="{{ url_for('driver.link_user', driver_id=d.id) }}" class="d-flex gap-2">
+      <select class="form-select form-select-sm" name="user_id">
+        <option value="">Unlinked</option>
+        {% for u in driver_users %}
+        <option value="{{ u.id }}" {% if d.user_id == u.id %}selected{% endif %}>{{ u.name }} ({{ u.email }})</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-sm btn-outline-primary">Save</button>
+    </form>
+  </td>
+  <td>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#edit-driver-{{ d.id }}">Edit</button>
+      <form method="post" action="{{ url_for('driver.delete_driver', driver_id=d.id) }}" onsubmit="return confirm('Delete driver?');">
+        <button class="btn btn-sm btn-outline-danger">Delete</button>
+      </form>
+    </div>
+  </td>
+  {% endif %}
+</tr>
+{% if session.get('user_role') == 'admin' %}
+<tr class="collapse" id="edit-driver-{{ d.id }}">
+  <td colspan="7">
+    <form method="post" action="{{ url_for('driver.edit_driver', driver_id=d.id) }}" enctype="multipart/form-data" class="row g-2 p-2 bg-light">
+      <div class="col-md-2"><input class="form-control form-control-sm" name="driver_name" value="{{ d.driver_name }}" required></div>
+      <div class="col-md-2"><input class="form-control form-control-sm" name="phone" value="{{ d.phone or '' }}"></div>
+      <div class="col-md-2"><input class="form-control form-control-sm" name="license_number" value="{{ d.license_number }}" required></div>
+      <div class="col-md-2"><input class="form-control form-control-sm" name="bus_number" value="{{ d.bus_number }}" required></div>
+      <div class="col-md-2"><input class="form-control form-control-sm" type="file" name="photo" accept="image/*"></div>
+      <div class="col-md-2"><button class="btn btn-sm btn-success w-100">Update</button></div>
+    </form>
+  </td>
+</tr>
+{% endif %}
+{% else %}<tr><td colspan="6" class="text-center text-muted">No drivers found.</td></tr>{% endfor %}
+</tbody></table></div></div>
+{% endblock %}

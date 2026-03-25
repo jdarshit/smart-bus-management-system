@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Smart Bus Management System{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="text-muted">Welcome back, {{ name or 'Administrator' }}!</p>
+</div>
+
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+    <strong><i class="bi bi-info-circle"></i> Notice:</strong> You are logged in as <strong>{{ role or 'User' }}</strong>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+
+<!-- Quick Stats -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-3 col-md-6">
+        <div class="card stat-card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Active Users</p>
+                        <h3 class="stat-value fw-bold">156</h3>
+                    </div>
+                    <div class="stat-icon bg-primary">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card stat-card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">System Status</p>
+                        <h3 class="stat-value text-success fw-bold">Online</h3>
+                    </div>
+                    <div class="stat-icon bg-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card stat-card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Pending Tasks</p>
+                        <h3 class="stat-value text-warning fw-bold">8</h3>
+                    </div>
+                    <div class="stat-icon bg-warning">
+                        <i class="bi bi-exclamation-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card stat-card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="stat-label">Database</p>
+                        <h3 class="stat-value fw-bold">MySQL</h3>
+                    </div>
+                    <div class="stat-icon bg-info">
+                        <i class="bi bi-database"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Sections -->
+<div class="row g-4">
+
+    <!-- Live Bus Status Cards -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-broadcast-pin text-danger me-2"></i>Live Bus Status
+                </h5>
+                <span id="lastUpdated" class="text-muted small">Updating…</span>
+            </div>
+            <div class="card-body">
+                <div id="busStatusCards" class="row g-3">
+                    <div class="col-12 text-center text-muted py-3">
+                        <div class="spinner-border spinner-border-sm me-2"></div>
+                        Loading bus status…
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Arrivals Table -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>Recent Arrivals
+                    <span id="arrivalBadge" class="badge bg-primary ms-2">0</span>
+                </h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="fetchArrivals()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Bus</th>
+                                <th>Route</th>
+                                <th>Driver</th>
+                                <th>Arrival Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="arrivalsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-3">
+                                    <div class="spinner-border spinner-border-sm me-2"></div>
+                                    Loading…
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Dashboard Real-time Polling ──────────────────────────────────────────────
+const POLL_INTERVAL_MS = 15000;   // refresh every 15 seconds
+
+// Format an ISO datetime string to a readable local time
+function fmtTime(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso + "Z");   // treat as UTC
+    return d.toLocaleString(undefined, {
+        month: "short", day: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
+}
+
+// Return a Bootstrap badge HTML snippet for a status string
+function statusBadge(status) {
+    const map = {
+        "on_time": '<span class="badge bg-success">On Time</span>',
+        "late":    '<span class="badge bg-danger">Late</span>',
+        "pending": '<span class="badge bg-secondary">Pending</span>',
+    };
+    return map[status] || `<span class="badge bg-light text-dark">${status}</span>`;
+}
+
+// ── Fetch and render arriving buses ─────────────────────────────────────────
+async function fetchArrivals() {
+    try {
+        const res  = await fetch("/api/arrivals/recent?limit=20");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        const tbody = document.getElementById("arrivalsTableBody");
+        document.getElementById("arrivalBadge").textContent = data.count;
+
+        if (data.count === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">
+                        No arrivals recorded yet today.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.arrivals.map((a, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td><strong>${a.bus_number}</strong></td>
+                <td>${a.route}</td>
+                <td>${a.driver_name}</td>
+                <td>${fmtTime(a.arrival_time)}</td>
+                <td>${statusBadge(a.status)}</td>
+            </tr>
+        `).join("");
+
+    } catch (err) {
+        console.error("[arrivals]", err);
+    }
+}
+
+// ── Fetch and render per-bus status cards ────────────────────────────────────
+async function fetchBusStatus() {
+    try {
+        const res  = await fetch("/api/bus-status");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        const container = document.getElementById("busStatusCards");
+
+        if (!data.buses || data.buses.length === 0) {
+            container.innerHTML = `<div class="col-12 text-center text-muted py-2">No buses registered.</div>`;
+            return;
+        }
+
+        const colorMap = { on_time: "success", late: "danger", pending: "secondary" };
+
+        container.innerHTML = data.buses.map(b => {
+            const color = colorMap[b.current_status] || "secondary";
+            return `
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card border-${color} h-100">
+                    <div class="card-body py-2 px-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-1 fw-bold">${b.bus_number}</h6>
+                            ${statusBadge(b.current_status)}
+                        </div>
+                        <p class="mb-0 small text-muted">${b.route}</p>
+                        <p class="mb-0 small">
+                            <i class="bi bi-person"></i> ${b.driver_name}
+                        </p>
+                        ${b.last_arrival
+                            ? `<p class="mb-0 small text-muted">Last: ${fmtTime(b.last_arrival)}</p>`
+                            : `<p class="mb-0 small text-muted">Not yet arrived</p>`
+                        }
+                    </div>
+                </div>
+            </div>`;
+        }).join("");
+
+        // Update "Last Updated" timestamp
+        document.getElementById("lastUpdated").textContent =
+            "Updated: " + new Date().toLocaleTimeString();
+
+    } catch (err) {
+        console.error("[bus-status]", err);
+    }
+}
+
+// ── Initial load + periodic polling ─────────────────────────────────────────
+(async () => {
+    await Promise.all([fetchArrivals(), fetchBusStatus()]);
+    setInterval(async () => {
+        await Promise.all([fetchArrivals(), fetchBusStatus()]);
+    }, POLL_INTERVAL_MS);
+})();
+</script>
+{% endblock %}

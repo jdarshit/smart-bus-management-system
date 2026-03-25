@@ -1,0 +1,131 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+}
+
+.tv-shell {
+    min-height: 100vh;
+    padding: 24px;
+}
+
+.tv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    border-radius: 14px;
+    background: #111827;
+    border: 1px solid #1f2937;
+}
+
+.tv-header h1 {
+    margin: 0;
+    font-size: 36px;
+    letter-spacing: 1px;
+}
+
+.subtitle {
+    margin: 6px 0 0;
+    font-size: 18px;
+    color: #94a3b8;
+}
+
+.header-right {
+    text-align: right;
+}
+
+.active-shift {
+    font-size: 24px;
+    font-weight: 700;
+    color: #38bdf8;
+    margin-bottom: 8px;
+}
+
+.clock {
+    font-size: 44px;
+    font-weight: 800;
+    color: #f8fafc;
+}
+
+.bus-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.bus-card {
+    border-radius: 14px;
+    padding: 22px;
+    border: 2px solid transparent;
+    background: #1f2937;
+    min-height: 220px;
+}
+
+.bus-card .bus-title {
+    font-size: 34px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.bus-card .meta {
+    font-size: 23px;
+    line-height: 1.4;
+}
+
+.bus-card .status-line {
+    margin-top: 12px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.bus-card.on-time {
+    border-color: #22c55e;
+    background: #052e16;
+}
+
+.bus-card.late {
+    border-color: #ef4444;
+    background: #450a0a;
+}
+
+.bus-card.waiting {
+    border-color: #6b7280;
+    background: #111827;
+}
+
+.status-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.status-chip.on-time {
+    background: #22c55e;
+    color: #052e16;
+}
+
+.status-chip.late {
+    background: #ef4444;
+    color: #fee2e2;
+}
+
+.status-chip.waiting {
+    background: #6b7280;
+    color: #f9fafb;
+}
+
+@media (max-width: 1280px) {
+    .bus-grid {
+        grid-template-columns: 1fr;
+    }
+}

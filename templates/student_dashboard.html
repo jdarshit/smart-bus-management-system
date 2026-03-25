@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard{% endblock %}
+{% block content %}
+<div class="dashboard-shell">
+  <section class="hero-header">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <div class="hero-title">Student Dashboard</div>
+        <p class="hero-subtitle mb-0">Mark attendance, choose your pickup stop, and view your profile details.</p>
+      </div>
+      {% if student %}
+      <span class="badge bg-success fs-6">Profile Linked</span>
+      {% else %}
+      <span class="badge bg-warning text-dark fs-6">Profile Not Linked</span>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if student %}
+  <section class="row g-4 align-items-stretch">
+    <div class="col-lg-5">
+      <div class="profile-hero h-100 p-4">
+        <h5 class="fw-bold mb-3">Student Profile</h5>
+        <div class="d-grid gap-2">
+          <div><strong>Name:</strong> {{ student.name }}</div>
+          <div><strong>Department:</strong> {{ student.department }}</div>
+          <div><strong>Year:</strong> {{ student.year }}</div>
+          <div><strong>Bus Number:</strong> {{ student.bus_number }}</div>
+          <div><strong>Pickup Stop:</strong> {{ student.pickup_stop or 'Not selected' }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="info-card-soft h-100 p-4">
+        <h5 class="fw-bold mb-3">Mark Attendance</h5>
+        <form method="post" action="{{ url_for('student.mark_attendance') }}" class="row g-3 align-items-end">
+          <div class="col-md-7">
+            <label class="form-label">Select Pickup Stop</label>
+            <select class="form-select" name="pickup_stop" required>
+              {% for stop in stop_options %}
+              <option value="{{ stop }}" {% if student.pickup_stop == stop %}selected{% endif %}>{{ stop }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-5">
+            <button class="btn btn-success w-100 quick-action-btn justify-content-center" {% if not attendance_allowed %}disabled{% endif %}><i class="bi bi-check2-circle"></i> MARK PRESENT</button>
+          </div>
+        </form>
+        <div class="mt-3 text-muted">Attendance allowed only between 07:00 and 11:00.</div>
+        {% if today_attendance %}
+        <div class="alert alert-success mt-3 mb-0">Today's attendance marked at {{ today_attendance.time.strftime('%H:%M:%S') }} from {{ today_attendance.pickup_stop }}.</div>
+        {% else %}
+        <div class="alert alert-light border mt-3 mb-0">No attendance marked for today yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% else %}
+  <div class="alert alert-warning mb-0">No student profile linked to your account.</div>
+  {% endif %}
+</div>
+{% endblock %}

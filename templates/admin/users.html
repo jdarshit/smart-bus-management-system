@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}All Users - Smart Bus{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-0"><i class="bi bi-people-fill text-dark"></i> All Users</h1>
+        <p class="text-muted mb-0">{{ users | length }} registered user(s)</p>
+    </div>
+    <a href="/auth/signup" class="btn btn-dark">
+        <i class="bi bi-person-plus"></i> Create User
+    </a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Registered</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td class="text-muted">{{ u.id }}</td>
+                        <td>
+                            <strong>{{ u.name }}</strong>
+                            {% if u.id == session.get('user_id') %}
+                            <span class="badge bg-secondary ms-1">You</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted">{{ u.email }}</td>
+                        <td>
+                            <span class="badge rounded-pill
+                                {% if u.role == 'admin' %}bg-danger
+                                {% elif u.role == 'driver' %}bg-success
+                                {% elif u.role == 'student' %}bg-primary
+                                {% else %}bg-warning text-dark{% endif %}">
+                                {{ u.role }}
+                            </span>
+                        </td>
+                        <td class="text-muted small">{{ u.created_at.strftime('%d %b %Y') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No users found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

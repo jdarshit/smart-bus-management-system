@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% block title %}Bus Management - Smart Bus{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-0"><i class="bi bi-bus-front text-info"></i> Bus Management</h1>
+        <p class="text-muted mb-0">{{ buses | length }} bus(es) registered</p>
+    </div>
+    <div class="d-flex gap-2">
+        <form method="POST" action="/admin/setup-buses">
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="bi bi-database-fill-check"></i> Setup BUS_01..BUS_06
+            </button>
+        </form>
+        <form method="POST" action="/admin/clear-student-rfid" onsubmit="return confirm('Remove RFID UID from all students?')">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-x-octagon"></i> Clear Student RFID
+            </button>
+        </form>
+        <button class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#addBusModal">
+            <i class="bi bi-plus-circle"></i> Add Bus
+        </button>
+    </div>
+</div>
+
+<!-- ── Buses Table ───────────────────────────────────────────────────────── -->
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Bus No.</th>
+                        <th>License Plate</th>
+                        <th>Driver Name</th>
+                        <th>Driver License</th>
+                        <th>Route</th>
+                        <th>Capacity</th>
+                        <th>Driver</th>
+                        <th>RFID UID</th>
+                        <th>Students</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in buses %}
+                    <tr>
+                        <td class="text-muted">{{ loop.index }}</td>
+                        <td>
+                            <strong><i class="bi bi-bus-front text-info me-1"></i>{{ b.bus_number }}</strong>
+                        </td>
+                        <td>{{ b.license_plate or '—' }}</td>
+                        <td>{{ b.driver_name or '—' }}</td>
+                        <td>{{ b.driver_license or '—' }}</td>
+                        <td class="text-muted small">{{ b.route_name or '—' }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ b.capacity }} seats</span>
+                        </td>
+                        <td>
+                            {% if b.driver %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-person-badge"></i> {{ b.driver.driver_name }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Unassigned</span>
+                                <button class="btn btn-sm btn-link p-0 ms-1"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#assignDriverModal"
+                                        data-bus-id="{{ b.id }}"
+                                        data-bus-number="{{ b.bus_number }}">
+                                    Assign
+                                </button>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if b.rfid_uid %}
+                                <code class="bg-light px-1 rounded small">{{ b.rfid_uid }}</code>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">{{ b.students.count() }}</span>
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-info me-1"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editBusModal"
+                                    data-id="{{ b.id }}"
+                                    data-number="{{ b.bus_number }}"
+                                    data-license-plate="{{ b.license_plate or '' }}"
+                                    data-driver-name="{{ b.driver_name or '' }}"
+                                    data-driver-license="{{ b.driver_license or '' }}"
+                                    data-route="{{ b.route_name or '' }}"
+                                    data-rfid="{{ b.rfid_uid or '' }}"
+                                    data-capacity="{{ b.capacity }}"
+                                    data-driver="{{ b.driver_id or '' }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="POST" action="/admin/delete-bus/{{ b.id }}"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Delete bus {{ b.bus_number }}? This removes all associated data.')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="11" class="text-center text-muted py-5">
+                            <i class="bi bi-bus-front fs-2 d-block mb-2 opacity-25"></i>
+                            No buses registered.
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#addBusModal">Add the first bus.</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MODAL: Add Bus
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="addBusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="bi bi-bus-front"></i> Add New Bus</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/admin/add-bus">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Bus Number <span class="text-danger">*</span></label>
+                            <input type="text" name="bus_number" class="form-control"
+                                   placeholder="e.g. BUS-01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Capacity</label>
+                            <input type="number" name="capacity" class="form-control"
+                                   min="1" max="100" value="40">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">Route Name</label>
+                            <input type="text" name="route_name" class="form-control"
+                                   placeholder="e.g. Route A - City Centre">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">License Plate</label>
+                            <input type="text" name="license_plate" class="form-control" placeholder="MP09 6271">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Driver Name</label>
+                            <input type="text" name="driver_name" class="form-control" placeholder="Rahul Singh">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">Driver License</label>
+                            <input type="text" name="driver_license" class="form-control" placeholder="DL12345678">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">RFID UID
+                                <small class="text-muted fw-normal">(optional — for IoT scanning)</small>
+                            </label>
+                            <input type="text" name="rfid_uid" class="form-control font-monospace"
+                                   placeholder="e.g. AB12CD34">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">Assign Driver</label>
+                            <select name="driver_id" class="form-select">
+                                <option value="">-- No Driver --</option>
+                                {% for d in drivers %}
+                                <option value="{{ d.id }}">{{ d.driver_name }}{% if d.license_number %} ({{ d.license_number }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info text-white">
+                        <i class="bi bi-plus-circle"></i> Add Bus
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MODAL: Edit Bus
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="editBusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit Bus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editBusForm" action="">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Bus Number <span class="text-danger">*</span></label>
+                            <input type="text" name="bus_number" id="editBusNumber" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Capacity</label>
+                            <input type="number" name="capacity" id="editBusCapacity" class="form-control" min="1" max="100">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">Route Name</label>
+                            <input type="text" name="route_name" id="editBusRoute" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">License Plate</label>
+                            <input type="text" name="license_plate" id="editBusLicensePlate" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Driver Name</label>
+                            <input type="text" name="driver_name" id="editBusDriverName" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">Driver License</label>
+                            <input type="text" name="driver_license" id="editBusDriverLicense" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">RFID UID</label>
+                            <input type="text" name="rfid_uid" id="editBusRfid" class="form-control font-monospace">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">Assign Driver</label>
+                            <select name="driver_id" id="editBusDriver" class="form-select">
+                                <option value="">-- Unassign Driver --</option>
+                                {% for d in drivers %}
+                                <option value="{{ d.id }}">{{ d.driver_name }}{% if d.license_number %} ({{ d.license_number }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-check-circle"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MODAL: Quick Assign Driver (from "Assign" inline link)
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="assignDriverModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-person-check"></i> Assign Driver</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/admin/assign-driver">
+                <input type="hidden" name="bus_id" id="assignBusId">
+                <div class="modal-body">
+                    <p class="text-muted">Assigning driver to <strong id="assignBusNumber"></strong></p>
+                    <label class="form-label fw-medium">Select Driver</label>
+                    <select name="driver_id" class="form-select" required>
+                        <option value="">-- Select Driver --</option>
+                        {% for d in drivers %}
+                        <option value="{{ d.id }}">{{ d.driver_name }}{% if d.phone %} — {{ d.phone }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Assign
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('editBusModal').addEventListener('show.bs.modal', function(event) {
+    const btn  = event.relatedTarget;
+    const form = document.getElementById('editBusForm');
+    form.action = '/admin/edit-bus/' + btn.dataset.id;
+    document.getElementById('editBusNumber').value   = btn.dataset.number;
+    document.getElementById('editBusLicensePlate').value = btn.dataset.licensePlate || '';
+    document.getElementById('editBusDriverName').value = btn.dataset.driverName || '';
+    document.getElementById('editBusDriverLicense').value = btn.dataset.driverLicense || '';
+    document.getElementById('editBusRoute').value    = btn.dataset.route;
+    document.getElementById('editBusRfid').value     = btn.dataset.rfid;
+    document.getElementById('editBusCapacity').value = btn.dataset.capacity;
+    const driverSel = document.getElementById('editBusDriver');
+    for (let opt of driverSel.options) { opt.selected = (opt.value === btn.dataset.driver); }
+});
+
+document.getElementById('assignDriverModal').addEventListener('show.bs.modal', function(event) {
+    const btn = event.relatedTarget;
+    document.getElementById('assignBusId').value      = btn.dataset.busId;
+    document.getElementById('assignBusNumber').textContent = btn.dataset.busNumber;
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if action == 'edit' else 'Add' }} Driver - Smart Bus{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold mb-0">
+        <i class="bi bi-person-badge-fill text-success"></i>
+        {{ 'Edit Driver' if action == 'edit' else 'Add New Driver' }}
+    </h1>
+    <a href="/drivers" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="POST"
+                      action="{{ '/drivers/' + driver.id|string + '/edit' if action == 'edit' else '/drivers/add' }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" name="driver_name" class="form-control"
+                               value="{{ driver.driver_name if driver else '' }}"
+                               placeholder="e.g. Rajan Kumar" required>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Phone Number</label>
+                            <input type="tel" name="phone" class="form-control"
+                                   value="{{ driver.phone if driver else '' }}"
+                                   placeholder="e.g. 9876543210">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">License Number</label>
+                            <input type="text" name="license_number" class="form-control"
+                                   value="{{ driver.license_number if driver else '' }}"
+                                   placeholder="e.g. DL-0420110012345">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-medium">Assign Bus</label>
+                        <select name="bus_id" class="form-select">
+                            <option value="">-- No Bus Assigned --</option>
+                            {% for bus in buses %}
+                            <option value="{{ bus.id }}"
+                                {{ 'selected' if driver and driver.bus_id == bus.id }}>
+                                {{ bus.bus_number }}
+                                {% if bus.route_name %} — {{ bus.route_name }}{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i>
+                            {{ 'Update Driver' if action == 'edit' else 'Add Driver' }}
+                        </button>
+                        <a href="/drivers" class="btn btn-light">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
